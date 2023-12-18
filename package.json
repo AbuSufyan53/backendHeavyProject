@@ -1,0 +1,11 @@
+{
+  "name": "expressbackend",
+  "version": "1.0.0",
+  "description": "a heavy backend project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "sufyan",
+  "license": "ISC"
+}
