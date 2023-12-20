@@ -11,5 +11,9 @@ app.use(express.urlencoded({extended:true, limit: "16kb"}))  //https://www.youtu
 app.use(express.static("public"))
 app.use(cookieParser())
 
+// https://www.youtube.com/watch?v=HqcGLJSORaA&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=14
+// routes import
+import userRouter from "./routes/user.routes.js";
+app.use("/api/v1/users", userRouter)
 
 export { app }
