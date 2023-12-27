@@ -63,22 +63,25 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 // https://www.youtube.com/watch?v=eWnZVUXMq8k&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=12 45:00
 // JWT
 // accesstoken
-userSchema.methods.generateAccessToken = async function () {
-    return jwt.sign({
+userSchema.methods.generateAccessToken = function () {
+    console.log("im inside generate access token")
+    return jwt.sign(
+    {
         _id: this._id,
         email: this.email,
         username: this.username,
         fullName: this.fullName
     },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-        }
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+    }
     )
 }
 
 // refresh token
-userSchema.methods.generateAccessToken = async function () {
+userSchema.methods.generateRefreshToken = function () {
+    console.log("im inside generate refresh token")
     return jwt.sign({
         _id: this._id,
     },
@@ -89,10 +92,6 @@ userSchema.methods.generateAccessToken = async function () {
     )
 }
 // JWT END
-
-userSchema.methods.generateAccessToken = async function () {
-
-}
 
 
 
