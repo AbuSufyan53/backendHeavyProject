@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiError.js"
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken"
 
 // https://www.youtube.com/watch?v=7DVpag3cO0g&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=16 18:00
 const generateAccessAndRefreshToken = async (userId) => {
@@ -12,9 +13,9 @@ const generateAccessAndRefreshToken = async (userId) => {
         console.log("::::", userId)
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
-        console.log("accessToken:::", accessToken)
+        // console.log("accessToken:::", accessToken)
         const refreshToken = user.generateRefreshToken()
-        console.log("refreshToken:::", refreshToken)
+        // console.log("refreshToken:::", refreshToken)
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
@@ -147,24 +148,24 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-    
+
     }
     console.log("accessToken =>", accessToken)
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(
-            200,
-            {
-                user: loggedInUser,
-                accessToken,
-                refreshToken
-            },
-            "user logged in successfully."
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken
+                },
+                "user logged in successfully."
+            )
         )
-    )
 
 })
 
@@ -198,4 +199,42 @@ const logoutUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User logged Out"))
 })
 
-export { registerUser, loginUser, logoutUser }
+// https://www.youtube.com/watch?v=L2_gIrDxCes&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=22
+// refresh accessToken
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.accessToken || req.body.refreshToken
+    if (!refreshAccessToken) {
+        throw new ApiError(401, "Unauthorized request")
+    }
+
+    try {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const user = await User.findById(decodedToken._id)
+    
+        if (!user) {
+            throw new ApiError(401, "invalid refresh token.")
+        }
+    
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or used.")
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
+    
+        return res.status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200, {accessToken, refreshToken}, "token refreshed.")
+        )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid Refresh Token")
+    }
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken }
