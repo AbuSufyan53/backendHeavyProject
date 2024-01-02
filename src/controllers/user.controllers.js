@@ -27,6 +27,7 @@ const generateAccessAndRefreshToken = async (userId) => {
     }
 }
 
+// register user
 const registerUser = asyncHandler(async (req, res) => {
     // https://www.youtube.com/watch?v=VKXnSwNm_lE&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=14
     // get user details from user
@@ -131,7 +132,7 @@ const loginUser = asyncHandler(async (req, res) => {
     })
     console.log({ "userExisted: ": userExisted })
     if (!userExisted) {
-        throw new ApiError(404, "2user does not exists.")
+        throw new ApiError(404, "user does not exists.")
     }
 
     //important topic 
@@ -210,31 +211,133 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
         const user = await User.findById(decodedToken._id)
-    
+
         if (!user) {
             throw new ApiError(401, "invalid refresh token.")
         }
-    
+
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or used.")
         }
-    
+
         const options = {
             httpOnly: true,
             secure: true
         }
-    
+
         const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
-    
+
         return res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(200, {accessToken, refreshToken}, "token refreshed.")
-        )
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(
+                new ApiResponse(200, { accessToken, refreshToken }, "token refreshed.")
+            )
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid Refresh Token")
     }
 })
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken }
+// https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=19
+// change Password
+const currentPassword = asyncHandler(async (req, res) => {
+
+    const { oldPassword, newPassword } = req.body
+
+    const user = await User.findById(req?._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid Old Password")
+    }
+
+    user.password = newPassword
+    await user.save({ validateBeforeSave: false })
+    return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully."))
+})
+
+// https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=19
+// get current user
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res.status(200).json(new ApiResponse(200, req.user, "Current User fetched successfully"))
+})
+
+// https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=19
+// update Account Details
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body
+
+    if (!fullName || !email) {
+        throw ApiError(400, "All fields are required")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: {
+            fullName,
+            email
+        }
+    },
+        {
+            new: true
+        }).select("-password")
+
+    return res.status(200).json(new ApiResponse(200, user, "Account details updated suuccessfully."))
+})
+
+// https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=27 30:00
+// update User Avatar
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing.")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading avatar.")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {
+            new: true
+        },
+    ).select("-password")
+    
+    res.status(200).json(new ApiResponse(200, user, "Avatar is updated"))
+})
+
+// https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=27 30:00
+// update User Cover Imaage
+const userCoverImaage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover Image file is missing.")
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImageLocalPath.url) {
+        throw new ApiError(400, "Error while uploading cover image.")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {
+            new: true
+        }).select("-password")
+
+    res.status(200).json(new ApiResponse(200, user, "Cover Image Updated Successfully."))
+})
+
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, currentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar, userCoverImaage }
