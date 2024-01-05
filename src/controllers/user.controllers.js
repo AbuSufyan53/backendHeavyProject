@@ -241,7 +241,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=19
 // change Password
-const currentPassword = asyncHandler(async (req, res) => {
+const changeCurrentPassword = asyncHandler(async (req, res) => {
 
     const { oldPassword, newPassword } = req.body
 
@@ -312,12 +312,12 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         },
     ).select("-password")
 
-    res.status(200).json(new ApiResponse(200, user, "Avatar is updated"))
+    return res.status(200).json(new ApiResponse(200, user, "Avatar is updated"))
 })
 
 // https://www.youtube.com/watch?v=9azRerL6CZc&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=27 30:00
 // update User Cover Imaage
-const userCoverImaage = asyncHandler(async (req, res) => {
+const updateUserCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path
     if (!coverImageLocalPath) {
         throw new ApiError(400, "Cover Image file is missing.")
@@ -339,13 +339,13 @@ const userCoverImaage = asyncHandler(async (req, res) => {
             new: true
         }).select("-password")
 
-    res.status(200).json(new ApiResponse(200, user, "Cover Image Updated Successfully."))
+    return res.status(200).json(new ApiResponse(200, user, "Cover Image Updated Successfully."))
 })
 
 // https://www.youtube.com/watch?v=fDTf1mk-jQg&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=22
 // get user channel profile:::
 
-const userChannelProfile = asyncHandler(async (req, res) => {
+const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing.")
@@ -408,7 +408,7 @@ const userChannelProfile = asyncHandler(async (req, res) => {
     if (!channel?.length) {
         throw new ApiError(404, "channel does not exists")
     }
-    res.status(200).json(new ApiResponse(200, channel[0], "User channe  l fetched successfully."))
+    return res.status(200).json(new ApiResponse(200, channel[0], "User channe  l fetched successfully."))
 })
 
 // https://www.youtube.com/watch?v=qNnR7cuVliI&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=21
@@ -458,4 +458,4 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 })
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, currentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar, userCoverImaage, userChannelProfile, getWatchHistory }
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, getUserChannelProfile, getWatchHistory }
