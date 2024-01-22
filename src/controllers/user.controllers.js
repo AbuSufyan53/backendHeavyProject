@@ -35,7 +35,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // validation - not empty
     // check if user already exists: username se ya email se
     // check for images, check for avatar
-    // upload them to cloudinary, avtar
+    // upload them to cloudinary, avatar
     // create user object - create entry in db
     // remove password and refresh token field from response
     // check for user creation
@@ -59,9 +59,8 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with same email or username already exists.")
     }
 
-    // console.log(req.files)
-
-    const avatarLocalPath = req.files?.avatar[0]?.path
+    // console.log("req files is",req.files)  
+    const avatarLocalPath = req.files?.avatar[0]?.path // Actually here multer gives access to req.files https://www.youtube.com/watch?v=VKXnSwNm_lE&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=15 30:00
     // const coverImageLocalPath = req.files?.coverImage[0]?.path
     let coverImageLocalPath
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
@@ -112,7 +111,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // send cookies
 
     const { email, username, password } = req.body
-    console.log("line:110:email: ", email)
+    // console.log("line:114:email: ", email)
     if (!username && !email) {
         throw new ApiError(400, "username or email is required")
     }
@@ -131,7 +130,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const userExisted = await User.findOne({
         $or: [{ username }, { email }]
     })
-    console.log({ "userExisted: ": userExisted })
+    // console.log({ "userExisted: ": userExisted })
     if (!userExisted) {
         throw new ApiError(404, "user does not exists.")
     }
@@ -152,7 +151,7 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
 
     }
-    console.log("accessToken =>", accessToken)
+    // console.log("accessToken =>", accessToken)
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -350,6 +349,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing.")
     }
+    console.log("username::", req.user.username)
+    if (username !== req.user.username) {
+        throw new ApiError(400, "username does not match.")
+    }
 
     const channel = await User.aggregate([
         {
@@ -367,9 +370,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "subscription",
+                from: "subscriptions",
                 localField: "_id",
-                foreignField: "subscribers",
+                foreignField: "subscriber",
                 as: "subscribedTo"
             }
         },
@@ -382,7 +385,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 channelsSubscribedToCount: {
                     $size: "$subscribedTo"
                 },
-                isSubscribed: {
+                isSubscribed: { //https://www.youtube.com/watch?v=fDTf1mk-jQg&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=23 25:00
                     $cond: { //condition
                         if: { $in: [req.user?._id, "$subscribers.subscriber"] },
                         then: true,
@@ -403,12 +406,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 email: 1
             }
         }
-
     ])
     if (!channel?.length) {
         throw new ApiError(404, "channel does not exists")
     }
-    return res.status(200).json(new ApiResponse(200, channel[0], "User channe  l fetched successfully."))
+    console.log("channel:::", channel)
+    return res.status(200).json(new ApiResponse(200, channel[0], "User channel fetched successfully."))
 })
 
 // https://www.youtube.com/watch?v=qNnR7cuVliI&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=21
@@ -432,9 +435,9 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                             localField: "owner",
                             foreignField: "_id",
                             as: "owner",
-                            pipeline:[
+                            pipeline: [
                                 {
-                                    $project:{
+                                    $project: {
                                         fullName: 1,
                                         username: 1,
                                         avatar: 1
@@ -444,9 +447,9 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                         }
                     },
                     {
-                        $addFields:{
-                            owner:{
-                                $first:"$owner"
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
                             }
                         }
                     }
@@ -454,8 +457,21 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             }
         }
     ])
+    console.log("user::", user)
     return res.status(200).json(new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully."))
 })
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, getUserChannelProfile, getWatchHistory }
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
+}
