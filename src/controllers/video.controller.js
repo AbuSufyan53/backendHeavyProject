@@ -9,7 +9,64 @@ import { User } from "../models/user.models.js";
 // get All Videos
 const getAllVideos = asyncHandler(async (req, res) => {
     //TODO: get all videos based on query, sort, pagination
-    return res.json({ msg: "hi" })
+    const { page = 1, limit = 10, query = "second", sortBy = "description", sortType = "desc", userId = "658bd90d8ac442460b448d46" } = req.query
+    // const videos = await Video.find({ $text: { $search: query } }).limit(limit).sort({ [sortBy]: sortType })
+
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid User Id.")
+    }
+    if (!query || !sortBy || !sortType) {
+        throw new ApiError(400, "Provide all fields.")
+    }
+
+    const user = User.findById(userId)
+
+    if (!user) {
+        throw new ApiError(400, "User does not exist.")
+    }
+
+    const options = {
+        page: parseInt(page),
+        limit: parseInt(limit)
+    }
+
+    let sortOptions = {
+        [sortBy]: sortType === "desc" ? -1 : 1
+    }
+
+    const videoAggregationPipeline = Video.aggregate([
+        {
+            $match: {
+                $and: [
+                    {
+                        owner: new mongoose.Types.ObjectId(userId)
+                    },
+                    {
+                        description: {
+                            $regex: query,
+                            $options: "i"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $sort: sortOptions
+        }
+    ])
+
+    const resultedVideo = await Video.aggregatePaginate(
+        videoAggregationPipeline,
+        options
+    );
+
+    console.log(resultedVideo)
+    
+    if (resultedVideo.totalDocs === 0){
+        return res.status(200).json(new ApiResponse(200, resultedVideo, "User has no video"));
+    }
+
+    return res.status(200).json(new ApiResponse(200, resultedVideo, "videos fetched successfully."))
 })
 
 // publish a new video
@@ -196,15 +253,15 @@ const updateVideo = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(200, updatedVideo, "Video Updated Successfully."))
 })
 
-// delete video
+// Delete Video
 const deleteVideo = asyncHandler(async (req, res) => {
-    const {videoId} = req.params
+    const { videoId } = req.params
     //TODO: delete video👇
-    if(!videoId){
+    if (!videoId) {
         throw new ApiResponse(400, "video Id is required.")
     }
 
-    if(!isValidObjectId(videoId)){
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "videoId is invalid.")
     }
 
@@ -212,13 +269,13 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const deleteVideoFromCloudinary = await deleteFromCloudinary(videoToDelete?.videoPublicId)
     const deleteThumbnailFromCloudinary = await deleteFromCloudinary(videoToDelete?.thumbnailPublicId)
 
-    if(!deleteVideoFromCloudinary || !deleteThumbnailFromCloudinary){
+    if (!deleteVideoFromCloudinary || !deleteThumbnailFromCloudinary) {
         throw new ApiError(400, "Error occured while deleting video and thumbnail from cloudinary")
     }
 
     const deleteVideoFromDb = await videoToDelete.deleteOne()
 
-    if(!deleteVideoFromDb){
+    if (!deleteVideoFromDb) {
         throw new ApiError(400, "Error while deleting video from Db.")
     }
 
@@ -228,10 +285,37 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 })
 
+// Toggle Publish Status 
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    // return res.status(200).json({msg:"okay"})
+    const { videoId } = req.params
+
+    if (!videoId) {
+        throw new ApiError(400, "Video Id is required.")
+    }
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "videoId is invalid.")
+    }
+
+    const video = await Video.findById(videoId)
+
+    video.isPublished = !video.isPublished
+    await video.save()
+
+    if (!video) {
+        throw new ApiError(400, "video not found")
+    }
+
+    return res.status(200).json(new ApiResponse(200, video, "toggling video publish status done."))
+
+})
+
 export {
     getAllVideos,
     publishAVideo,
     getVideoById,
     updateVideo,
-    deleteVideo
+    deleteVideo,
+    togglePublishStatus
 }
