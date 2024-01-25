@@ -61,8 +61,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     );
 
     console.log(resultedVideo)
-    
-    if (resultedVideo.totalDocs === 0){
+
+    if (resultedVideo.totalDocs === 0) {
         return res.status(200).json(new ApiResponse(200, resultedVideo, "User has no video"));
     }
 
