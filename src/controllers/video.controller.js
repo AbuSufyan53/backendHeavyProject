@@ -212,6 +212,22 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
     ]);
 
+    const userId = req?.user?._id
+    if(!userId){
+        throw new ApiError(400, "No user found, please login.")
+    }
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "invalid userId")
+    }
+    
+    const userToUpdate = await User.findByIdAndUpdate(userId,{
+        $push:{
+            watchHistory: videoId
+        }
+    })
+    console.log(userToUpdate)
+
+
     return res.status(200).json(new ApiResponse(200, [video, videoDetails], "video found"))
 
 })
