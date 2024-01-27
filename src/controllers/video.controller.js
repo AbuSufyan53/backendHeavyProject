@@ -213,18 +213,21 @@ const getVideoById = asyncHandler(async (req, res) => {
     ]);
 
     const userId = req?.user?._id
-    if(!userId){
+    if (!userId) {
         throw new ApiError(400, "No user found, please login.")
     }
-    if(!isValidObjectId(videoId)){
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "invalid userId")
     }
-    
-    const userToUpdate = await User.findByIdAndUpdate(userId,{
-        $push:{
+
+    const userToUpdate = await User.findByIdAndUpdate(userId, {
+        $push: {
             watchHistory: videoId
         }
-    })
+    },
+        {
+            new: true
+        })
     console.log(userToUpdate)
 
 
