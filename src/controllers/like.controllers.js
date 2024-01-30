@@ -1,6 +1,5 @@
 import { Like } from "../models/like.models.js";
 import { Video } from "../models/video.models.js"
-import { Comment } from "../models/comment.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/apiResponse.js"

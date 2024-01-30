@@ -1,6 +1,6 @@
 import { Video } from "../models/video.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import mongoose, { isObjectIdOrHexString, isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
@@ -243,7 +243,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "video Id is required.")
     }
 
-    if (!isObjectIdOrHexString(videoId)) {
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "invalid videoId.")
     }
 
