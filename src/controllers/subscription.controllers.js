@@ -132,22 +132,19 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         }
     },
     {
-        $addFields:{
-            channelInfo:{
-                $first:"$channelInfo"
+        $addFields: {
+            channelInfo: {
+                $first: "$channelInfo"
             }
         }
     }])
     if (channelList.length === 0) {
         return res.status(200).json(new ApiResponse(200, {}, "User has not subscribet anybody yet."))
     }
-    
-    return res.status(200).json(new ApiResponse(200, channelList, "ChannelList of user has fetched successfully."))    
+
+    return res.status(200).json(new ApiResponse(200, channelList, "ChannelList of user has fetched successfully."))
 
 })
-
-
-
 
 export {
     toggleSubscription,

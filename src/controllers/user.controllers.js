@@ -11,12 +11,9 @@ import mongoose from "mongoose";
 // https://www.youtube.com/watch?v=7DVpag3cO0g&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=16 18:00
 const generateAccessAndRefreshToken = async (userId) => {
     try {
-        console.log("::::", userId)
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
-        // console.log("accessToken:::", accessToken)
         const refreshToken = user.generateRefreshToken()
-        // console.log("refreshToken:::", refreshToken)
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
@@ -59,13 +56,11 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with same email or username already exists.")
     }
 
-    // console.log("req files is",req.files)  
     const avatarLocalPath = req.files?.avatar[0]?.path // Actually here multer gives access to req.files https://www.youtube.com/watch?v=VKXnSwNm_lE&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW&index=15 30:00
     // const coverImageLocalPath = req.files?.coverImage[0]?.path
     let coverImageLocalPath
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
-        console.log("coverImageLocalPath:", coverImageLocalPath)
     }
 
     if (!avatarLocalPath) {
@@ -74,7 +69,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-    console.log("coverImage: ", coverImage)
 
     if (!avatar) {
         throw new ApiError(400, "Avatar is required.")
@@ -111,7 +105,6 @@ const loginUser = asyncHandler(async (req, res) => {
     // send cookies
 
     const { email, username, password } = req.body
-    // console.log("line:114:email: ", email)
     if (!username && !email) {
         throw new ApiError(400, "username or email is required")
     }
@@ -130,7 +123,6 @@ const loginUser = asyncHandler(async (req, res) => {
     const userExisted = await User.findOne({
         $or: [{ username }, { email }]
     })
-    // console.log({ "userExisted: ": userExisted })
     if (!userExisted) {
         throw new ApiError(404, "user does not exists.")
     }
@@ -151,7 +143,6 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
 
     }
-    // console.log("accessToken =>", accessToken)
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -185,8 +176,6 @@ const logoutUser = asyncHandler(async (req, res) => {
             new: true
         }
     )
-    console.log(logoutuser)
-
 
     const options = {
         httpOnly: true,
@@ -349,10 +338,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing.")
     }
-    console.log("username::", req.user.username)
-    if (username !== req.user.username) {
-        throw new ApiError(400, "username does not match.")
-    }
 
     const channel = await User.aggregate([
         {
@@ -410,7 +395,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     if (!channel?.length) {
         throw new ApiError(404, "channel does not exists")
     }
-    console.log("channel:::", channel)
     return res.status(200).json(new ApiResponse(200, channel[0], "User channel fetched successfully."))
 })
 
@@ -457,7 +441,6 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             }
         }
     ])
-    console.log("user::", user)
     return res.status(200).json(new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully."))
 })
 

@@ -53,7 +53,6 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         }
     ])
-    console.log("tweets:::", tweets)
 
     const userTweets = await Tweet.aggregatePaginate(
         tweets,

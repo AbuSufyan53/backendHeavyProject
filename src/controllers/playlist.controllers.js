@@ -10,7 +10,6 @@ const createPlaylist = asyncHandler(async (req, res) => {
     const { name, description } = req.body
     //TODO: create playlist👇
 
-    console.log("description:::", description)
 
     if (!name || !description) {
         throw new ApiError(400, "Provide all data")
@@ -63,7 +62,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         throw new ApiError(400, "error in fetching playlist.")
     }
 
-    console.log(userPlaylist)
     if (userPlaylist.length === 0) {
         return res.status(200).json(new ApiResponse(200, userPlaylist, "No playlist has been created by this user yet."))
     }
@@ -216,11 +214,9 @@ const updatePlaylist = asyncHandler(async (req, res) => {
 
     try {
         const playlist = await Playlist.findOne({ _id: playlistId, owner: userId })
-        console.log(playlist)
         if (playlist) {
             const result = await Playlist.updateOne({ _id: playlistId, owner: userId },
                 { $set: { name, description } })
-            console.log(result)
             if (result.modifiedCount === 0) {
                 return res.status(200).json(new ApiResponse(200, {}, "Playlist not found or unauthorized for current logged in user"))
             } else {

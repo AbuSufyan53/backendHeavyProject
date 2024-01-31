@@ -60,8 +60,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
         options
     );
 
-    console.log(resultedVideo)
-
     if (resultedVideo.totalDocs === 0) {
         return res.status(200).json(new ApiResponse(200, resultedVideo, "User has no video"));
     }
@@ -77,8 +75,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if ([title, description].some(field => field === "")) {
         throw new ApiError(400, "All fields are required")
     }
-
-    console.log(req.files)
 
     const videoLocalPath = req.files?.video[0]?.path
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path
@@ -228,8 +224,6 @@ const getVideoById = asyncHandler(async (req, res) => {
         {
             new: true
         })
-    console.log(userToUpdate)
-
 
     return res.status(200).json(new ApiResponse(200, [video, videoDetails], "video found"))
 
